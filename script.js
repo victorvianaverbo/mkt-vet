@@ -1,188 +1,178 @@
 /**
- * Metodo Zero v20
+ * Vanilla JS para Interatividade de Alta Performance Clínica
+ * Sem dependências pesadas. Focado em Intersection Observers.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initAOS();
-  initForms();
-  initPhoneInput();
-  initYear();
-});
 
-/* ==========================================
-   AOS
-   ========================================== */
+    /** 
+     * 1. Reveal on Scroll Genérico (Elementos que sobem com Fade)
+     * Usado nas caixas do Bento, Textos de Cases, etc.
+     */
+    const revealElements = document.querySelectorAll('.reveal-on-scroll');
 
-function initAOS() {
-  if (typeof AOS !== 'undefined') {
-    AOS.init({
-      duration: 800,
-      once: true,
-      offset: 50,
-      easing: 'ease-out-cubic',
-      disableMutationObserver: true
-    });
-  }
-}
-
-/* ==========================================
-   FORMULARIOS
-   ========================================== */
-
-const tempEmailDomains = [
-  'tempmail', 'guerrillamail', '10minutemail', 'mailinator',
-  'throwaway', 'fakeinbox', 'yopmail', 'trashmail', 'temp-mail',
-  'disposable', 'sharklasers'
-];
-
-function isValidEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!regex.test(email)) return false;
-  const domain = email.split('@')[1].toLowerCase();
-  return !tempEmailDomains.some(temp => domain.includes(temp));
-}
-
-function initForms() {
-  document.querySelectorAll('form[data-form]').forEach(form => {
-    form.addEventListener('submit', handleFormSubmit);
-  });
-}
-
-async function handleFormSubmit(e) {
-  e.preventDefault();
-
-  const form = e.target;
-  const btn = form.querySelector('[type="submit"]');
-  const feedback = form.querySelector('.form-feedback');
-
-  // Validacao
-  let valid = true;
-  form.querySelectorAll('[required]').forEach(field => {
-    field.classList.remove('error');
-
-    if (!field.value.trim()) {
-      field.classList.add('error');
-      valid = false;
-    }
-
-    if (field.type === 'email' && field.value && !isValidEmail(field.value)) {
-      field.classList.add('error');
-      valid = false;
-    }
-
-    if (field.type === 'tel') {
-      const iti = field._iti;
-      if (iti && !iti.isValidNumber()) {
-        field.classList.add('error');
-        valid = false;
-      }
-    }
-  });
-
-  if (!valid) {
-    showFeedback(feedback, 'error', 'Preencha todos os campos corretamente.');
-    return;
-  }
-
-  // Captura nome e email ANTES do envio (form.reset limpa os campos)
-  const nome = form.querySelector('[name="nome"]')?.value || '';
-  const email = form.querySelector('[name="email"]')?.value || '';
-
-  // Telefone internacional - pega instancia do input DESTE form
-  const phone = form.querySelector('input[type="tel"]');
-  if (phone && phone._iti) {
-    phone.value = phone._iti.getNumber();
-  }
-
-  // Envio
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-
-  try {
-    const res = await fetch(form.getAttribute('action') || window.location.pathname, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(new FormData(form)).toString()
-    });
-
-    if (res.ok) {
-      // Meta Pixel
-      if (typeof fbq === 'function') {
-        fbq('track', 'Lead');
-      }
-
-      // GTM dataLayer
-      if (typeof dataLayer !== 'undefined') {
-        dataLayer.push({ event: 'generate_lead', form_name: form.getAttribute('name') || 'contato', method: 'netlify_form' });
-      }
-
-      // Redirect com parametros
-      const action = form.getAttribute('action');
-      if (action) {
-        const redirectUrl = new URL(action, window.location.origin);
-
-        // Repassa todos os parametros da URL atual (utm_source, fbclid, etc)
-        new URLSearchParams(window.location.search).forEach((value, key) => {
-          redirectUrl.searchParams.set(key, value);
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
         });
-
-        // Passa nome e email como parametros
-        if (nome) redirectUrl.searchParams.set('nome', nome);
-        if (email) redirectUrl.searchParams.set('email', email);
-
-        window.location.href = redirectUrl.toString();
-        return;
-      }
-
-      // Fallback: mostrar mensagem (quando nao tem action)
-      showFeedback(feedback, 'success', 'Mensagem enviada com sucesso!');
-      form.reset();
-      if (phone && phone._iti) phone._iti.setNumber('');
-    } else {
-      throw new Error('Erro');
-    }
-  } catch {
-    showFeedback(feedback, 'error', 'Erro ao enviar. Tente novamente.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }
-}
-
-function showFeedback(el, type, msg) {
-  if (!el) return;
-  el.className = 'form-feedback ' + type;
-  el.textContent = msg;
-  setTimeout(() => {
-    el.className = 'form-feedback';
-    el.textContent = '';
-  }, 5000);
-}
-
-/* ==========================================
-   TELEFONE INTERNACIONAL
-   ========================================== */
-
-function initPhoneInput() {
-  if (typeof intlTelInput === 'undefined') return;
-
-  document.querySelectorAll('input[type="tel"]').forEach(input => {
-    input._iti = intlTelInput(input, {
-      initialCountry: 'br',
-      preferredCountries: ['br', 'us', 'pt'],
-      separateDialCode: true,
-      strictMode: true,
-      loadUtilsOnInit: 'https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js'
+    }, {
+        root: null,
+        rootMargin: '0px 0px -20px 0px', // Reduzido de -100px para garantir que apareça no mobile
+        threshold: 0.05
     });
-  });
-}
 
-/* ==========================================
-   UTILS
-   ========================================== */
+    revealElements.forEach(el => revealObserver.observe(el));
 
-function initYear() {
-  const el = document.getElementById('year');
-  if (el) el.textContent = new Date().getFullYear();
-}
+
+    /**
+     * 2. Effeito Skew Oberservado nos Mocksups dos Dashboards do Google Ads
+     * Aplica classe .skewed para tirar do 3D fixo apenas logo quando aparece na tela
+     */
+    const mockupElements = document.querySelectorAll('.skew-on-scroll');
+
+    const skewObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('skewed');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.3 // Esperar 30% da Imagem aparecer para dar o giro
+    });
+
+    mockupElements.forEach(mockup => skewObserver.observe(mockup));
+
+
+    /**
+     * 3. Animação de Entrada do Form (Reflect) 
+     * Usado nas Pricing Cards para dar um leve pop up no Pricing table.
+     */
+    const priceCards = document.querySelectorAll('.reflect-on-scroll');
+    
+    const priceObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if(entry.isIntersecting){
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+         rootMargin: '0px 0px -20px 0px',
+         threshold: 0.05
+    });
+
+    priceCards.forEach(card => {
+        card.classList.add('reveal-on-scroll');
+        priceObserver.observe(card);
+    });
+
+
+    /**
+     * 4. Validação de Telefone (intl-tel-input)
+     */
+    const phoneInput = document.querySelector('#modal-tel');
+    let iti;
+    if (phoneInput) {
+        const loadUtils = () => {
+            if (iti) {
+                iti.setUtils('https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js');
+            }
+        };
+
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(loadUtils);
+        } else {
+            setTimeout(loadUtils, 3000);
+        }
+    }
+
+
+    /**
+     * 5. Lógica de Modal
+     */
+    const modal = document.querySelector('#lead-modal');
+    const modalClose = document.querySelector('.modal-close');
+    let currentWhatsappMsg = "";
+
+    function openModal(msg) {
+        currentWhatsappMsg = msg;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('[data-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const msg = btn.getAttribute('data-whatsapp-msg');
+            openModal(msg);
+        });
+    });
+
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+
+    /**
+     * 6. Captura de Lead e Redirect WhatsApp
+     */
+    const leadForm = document.querySelector('[data-form]');
+    const feedback = document.querySelector('.form-feedback');
+    const submitBtn = document.querySelector('.submit-btn');
+
+    if (leadForm) {
+        leadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validação de telefone
+            if (!iti.isValidNumber()) {
+                feedback.textContent = 'Por favor, insira um número válido.';
+                feedback.className = 'form-feedback error';
+                return;
+            }
+
+            // UI Feedback
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processando...';
+            feedback.textContent = 'Enviando dados com segurança...';
+            feedback.className = 'form-feedback';
+
+            const formData = new FormData(leadForm);
+            
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams(formData).toString()
+                });
+
+                if (response.ok) {
+                    feedback.textContent = 'Sucesso! Redirecionando para o WhatsApp...';
+                    feedback.className = 'form-feedback success';
+                    
+                    const wppUrl = `https://wa.me/5531994019412?text=${encodeURIComponent(currentWhatsappMsg)}`;
+                    
+                    setTimeout(() => {
+                        window.location.href = wppUrl;
+                        closeModal();
+                    }, 1000);
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Prosseguir para o WhatsApp 🚀';
+                feedback.textContent = 'Erro ao enviar. Tente novamente.';
+                feedback.className = 'form-feedback error';
+            }
+        });
+    }
+
+});
