@@ -79,24 +79,23 @@ Quer que o próximo seja o seu?
 ---
 
 ## CRIATIVO 4 — Gancho: Objeção de Custo
-> **Objetivo:** Quebrar a crença de que Google Ads é caro. Ancoragem com R$20/dia.
+> **Objetivo:** Quebrar a crença de que Google Ads é caro. Ancoragem com R$20/dia. Avatar: veterinário ou dono de clínica.
 
-**Direção Visual (1080x1080)**
-- Fundo: branco (#FFFFFF)
-- Divisão vertical 50/50:
-  - Lado esquerdo (#115E59): "R$20/dia" em branco, grande; subtexto: "no Google Ads"
-  - Lado direito (branco): ícone de calendário cheio ou agenda com horários marcados; subtexto em #1E293B: "agenda cheia toda semana"
-- Seta ou símbolo "→" no centro separando os dois lados, cor âmbar
-- Rodapé em #115E59 100% de largura: "Esse é o investimento mínimo que recomendamos."
+**Prompt Nano Banan**
+```
+Crie um anúncio para Instagram feed (1080x1080). Layout dividido verticalmente ao meio. Topo do card: faixa fina branca com texto pequeno em verde #115E59: "Veterinário, quanto você acha que custa aparecer no Google?". Lado esquerdo: fundo verde escuro #115E59, texto branco em fonte grande serifada "R$20/dia", abaixo texto menor branco "no Google Ads". No centro exato da divisão, seta "→" em âmbar #D97706. Lado direito: fundo branco #FFFFFF, ícone minimalista de calendário com horários marcados em verde, abaixo texto em cinza escuro "agenda cheia toda semana". Layout flat, profissional, sem fotos.
+```
 
 **Texto do Post**
-Você não precisa do orçamento de um hospital grande para encher sua agenda.
+Veterinário, quanto você acha que custa aparecer no Google?
 
-Com R$20 por dia no Google — menos de uma consulta — sua clínica pode aparecer para dezenas de tutores buscando atendimento na sua região.
+A maioria dos donos de clínica acredita que precisa de um orçamento de hospital grande.
 
-O segredo não é quanto você investe. É como você investe.
+Com R$20 por dia — menos do que uma consulta — sua clínica já aparece para tutores buscando atendimento na sua região agora mesmo.
 
-**Headline:** Com R$20 por dia, sua clínica aparece para tutores na sua região.
+O segredo não é quanto você investe. É saber onde e como investir dentro do mercado veterinário.
+
+**Headline:** Veterinário: R$20/dia no Google já enche sua agenda.
 **CTA:** Falar com especialista
 
 ---

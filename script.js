@@ -159,6 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     const wppUrl = `https://wa.me/5531994019412?text=${encodeURIComponent(currentWhatsappMsg)}`;
                     
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'conversion', {
+                            'send_to': 'AW-18008831333/5fYeCLy_4oYcEOXqo4tD'
+                        });
+                    }
+
                     setTimeout(() => {
                         window.location.href = wppUrl;
                         closeModal();
