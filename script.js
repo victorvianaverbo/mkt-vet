@@ -76,17 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     const phoneInput = document.querySelector('#modal-tel');
     let iti;
-    if (phoneInput) {
-        const loadUtils = () => {
-            if (iti) {
-                iti.setUtils('https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js');
-            }
-        };
-
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadUtils);
-        } else {
-            setTimeout(loadUtils, 3000);
+    if (phoneInput && typeof window.intlTelInput === 'function') {
+        try {
+            iti = window.intlTelInput(phoneInput, {
+                initialCountry: 'br',
+                preferredCountries: ['br', 'us', 'pt'],
+                separateDialCode: true,
+                strictMode: true,
+                utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js'
+            });
+        } catch (e) {
+            console.error('Erro ao inicializar intlTelInput:', e);
         }
     }
 
@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-modal]').forEach(btn => {
         btn.addEventListener('click', () => {
             const msg = btn.getAttribute('data-whatsapp-msg');
+            console.log('Botão clicado, mensagem:', msg);
             openModal(msg);
         });
     });
@@ -130,12 +131,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (leadForm) {
         leadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('Iniciando submissão do form...');
 
-            // Validação de telefone
-            if (!iti.isValidNumber()) {
-                feedback.textContent = 'Por favor, insira um número válido.';
-                feedback.className = 'form-feedback error';
-                return;
+            // Validação de telefone com fallback agressivo
+            if (iti) {
+                if (!iti.isValidNumber()) {
+                    console.log('Telefone inválido');
+                    feedback.textContent = 'Por favor, insira um número válido.';
+                    feedback.className = 'form-feedback error';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Prosseguir para o WhatsApp 🚀';
+                    return;
+                }
+                console.log('Telefone válido:', iti.getNumber());
+            } else {
+                console.warn('iti não inicializado, pulando validação técnica...');
             }
 
             // UI Feedback
@@ -146,37 +156,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const formData = new FormData(leadForm);
             
+            // Hard Fail-Safe: Redireciona em 5 segundos independente de QUALQUER coisa
+            const hardRedirectTimeout = setTimeout(() => {
+                console.warn('Hard Redirect acionado após 5s');
+                const wppUrl = `https://wa.me/5531994019412?text=${encodeURIComponent(currentWhatsappMsg || "Olá! Vim pelo site.")}`;
+                window.location.href = wppUrl;
+            }, 5000);
+
             try {
+                // Timeout do fetch (4 segundos)
+                const controller = new AbortController();
+                const fetchTimeout = setTimeout(() => controller.abort(), 4000);
+
                 const response = await fetch('/', {
                     method: 'POST',
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams(formData).toString()
+                    body: new URLSearchParams(formData).toString(),
+                    signal: controller.signal
                 });
 
+                clearTimeout(fetchTimeout);
+
                 if (response.ok) {
-                    feedback.textContent = 'Sucesso! Redirecionando para o WhatsApp...';
-                    feedback.className = 'form-feedback success';
-                    
-                    const wppUrl = `https://wa.me/5531994019412?text=${encodeURIComponent(currentWhatsappMsg)}`;
+                    console.log('Form enviado com sucesso!');
+                    const wppUrl = `https://wa.me/5531994019412?text=${encodeURIComponent(currentWhatsappMsg || "Olá! Vim pelo site.")}`;
                     
                     if (typeof gtag === 'function') {
-                        gtag('event', 'conversion', {
-                            'send_to': 'AW-18008831333/5fYeCLy_4oYcEOXqo4tD'
-                        });
+                        gtag('event', 'conversion', { 'send_to': 'AW-18008831333/5fYeCLy_4oYcEOXqo4tD' });
                     }
 
-                    setTimeout(() => {
-                        window.location.href = wppUrl;
-                        closeModal();
-                    }, 1000);
+                    clearTimeout(hardRedirectTimeout);
+                    window.location.href = wppUrl;
                 } else {
-                    throw new Error();
+                    throw new Error('Server responded with ' + response.status);
                 }
             } catch (err) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Prosseguir para o WhatsApp 🚀';
-                feedback.textContent = 'Erro ao enviar. Tente novamente.';
-                feedback.className = 'form-feedback error';
+                console.error('Erro ou Timeout no fetch:', err);
+                const wppUrl = `https://wa.me/5531994019412?text=${encodeURIComponent(currentWhatsappMsg || "Olá! Vim pelo site.")}`;
+                // Deixa o hardRedirectTimeout cuidar disso ou redireciona agora se o erro for imediato
+                if (err.name !== 'AbortError') {
+                    clearTimeout(hardRedirectTimeout);
+                    window.location.href = wppUrl;
+                }
             }
         });
     }

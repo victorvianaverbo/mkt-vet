@@ -12,17 +12,34 @@
     <!-- Font Pairing: Playfair Display (Heading Clássico/Elegante) + Source Sans 3 (Body Clean/Legível) -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;700&display=swap" rel="stylesheet">
     
+    <!-- Resource Hints -->
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://www.googleadservices.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preload" href="/.netlify/images?url=https://images.unsplash.com/photo-1599443015574-be5fe8a05783&w=800&q=80" as="image">
     <link rel="stylesheet" href="style.css">
     <!-- intl-tel-input (Telefone Internacional) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
 
     <!-- Global site tag (gtag.js) - Google Ads: 18008831333 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18008831333"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'AW-18008831333');
+      function loadTracking() {
+        const script = document.createElement('script');
+        script.src = "https://www.googletagmanager.com/gtag/js?id=AW-18008831333";
+        script.async = true;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'AW-18008831333');
+      }
+
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadTracking);
+      } else {
+        setTimeout(loadTracking, 3000);
+      }
     </script>
 </head>
 <body>
@@ -52,7 +69,7 @@
             <!-- Prevenindo CLS: Eager Loading no Hero e sem AOS initial hide -->
             <div class="hero-visual">
                 <div class="image-mask">
-                    <img src="/.netlify/images?url=https://images.unsplash.com/photo-1599443015574-be5fe8a05783&w=800&q=80" alt="Veterinário atendendo com profissionalismo" class="hero-img" width="800" height="1000" loading="eager">
+                    <img src="/.netlify/images?url=https://images.unsplash.com/photo-1599443015574-be5fe8a05783&w=800&q=80" alt="Veterinário atendendo com profissionalismo" class="hero-img" width="800" height="1000" loading="eager" fetchpriority="high">
                 </div>
                 <div class="floating-card glass">
                     <div class="card-icon">📈</div>
